@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: infrastructure/docker/api-gateway.Dockerfile
+    container_name: gitty-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      - ENV=development
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=gitty_password
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - LOG_LEVEL=debug
+    volumes:
+      - ../../apps/api-gateway:/app/apps/api-gateway
+      - ../../libs:/app/libs
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+
+  auth-service:
+    build:
+      context: ../../
+      dockerfile: infrastructure/docker/auth-service.Dockerfile
+    container_name: gitty-auth-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=dev_jwt_secret_must_be_long_and_secure
+      - LOG_LEVEL=debug
+    volumes:
+      - ../../apps/auth-service:/app/apps/auth-service
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ../../
+      dockerfile: infrastructure/docker/worker.Dockerfile
+    container_name: gitty-worker
+    environment:
+      - ENV=development
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_PORT=5672
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=gitty_password
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - LOG_LEVEL=debug
+    volumes:
+      - ../../apps/worker:/app/apps/worker
+      - ../../libs:/app/libs
+      - ../../services:/app/services
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy

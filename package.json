@@ -1,0 +1,11 @@
+{
+  "name": "gitty-ai-root",
+  "private": true,
+  "workspaces": [
+    "apps/auth-service",
+    "apps/frontend"
+  ],
+  "dependencies": {
+    "pino": "^8.14.1"
+  }
+}
